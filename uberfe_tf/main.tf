@@ -5,17 +5,21 @@ resource "aws_instance" "myweb" {
   key_name        = "terraform_ec2_key"
 
   user_data = <<-EOF
-          #!/bin/bash
-          mkdir ~/app
+          sudo apt update
+          sudo apt install npm -y
+          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          sudo apt install nodejs -y
+          sudo apt install nginx -y
+          mkdir /home/ubuntu/app
           cd app
           git init
           git clone https://anish-kapuskar:anishk7895@github.com/Spring2021-DevOps/Uber-React.git
           cd Uber-React
-          sudo apt update
-          sudo apt install npm -y
+          npm update
           npm install
           npm run build
-          npm start
+          sudo cp -a build/. /usr/share/nginx/html/
+          sudo systemctl restart nginx
      EOF
 
   tags = {
