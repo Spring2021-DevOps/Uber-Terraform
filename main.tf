@@ -23,7 +23,7 @@ resource "aws_subnet" "private" {
   cidr_block = "10.0.2.0/24"
 
   tags = {
-    Name = "public subnet"
+    Name = "private subnet"
   }
 }
 
@@ -117,7 +117,7 @@ resource "aws_security_group" "app-server-sg" {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
 
@@ -212,7 +212,7 @@ resource "aws_instance" "db-server" {
   user_data = "${file("install_mongo.sh")}" 
 
   tags = {
-    Name = "app-server"
+    Name = "db-server"
   }
 }
 
