@@ -70,84 +70,14 @@ resource "aws_route_table_association" "rt-a-2" {
   route_table_id = aws_route_table.uber-rt.id
 }
 
-
 ################################################################################################
 
-resource "aws_instance" "app-server" {
-  ami             = "ami-013f17f36f8b1fefb"
-  instance_type   = "t2.micro"
-  security_groups = ["${aws_security_group.app-server-sg.name}"]
-  key_name        = "terraform_ec2_key"
-
-  subnet_id = aws_subnet.public.id
-
-  user_data = <<-EOF
-          sudo apt update
-          sudo apt install npm -y
-          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-          sudo apt install nodejs -y
-          sudo apt install nginx -y
-          mkdir /home/ubuntu/app
-          cd /home/ubuntu/app
-          git init
-          git clone https://anish-kapuskar:anishk7895@github.com/Spring2021-DevOps/Uber-React.git
-          cd /home/ubuntu/app/Uber-React
-          npm update
-          npm install
-          npm run build
-          sudo cp -a /home/ubuntu/app/Uber-React/build/. /usr/share/nginx/html/
-          sudo systemctl restart nginx
-     EOF
-
-  tags = {
-    Name = "app-server"
-  }
-}
-
-################################################################################################
-
-resource "aws_instance" "db-server" {
-  ami             = "ami-013f17f36f8b1fefb"
-  instance_type   = "t2.micro"
-  security_groups = ["${aws_security_group.db-server-sg.name}"]
-  key_name        = "terraform_ec2_key"
-
-  subnet_id = aws_subnet.private.id
-
-  user_data = "${file("install_mongo.sh")}" 
-
-  tags = {
-    Name = "app-server"
-  }
-}
-
-
-################################################################################################
-
-resource "aws_key_pair" "terraform_ec2_key" {
-  key_name   = "terraform_ec2_key"
-  public_key = "${file("../devops-neu-key.pub")}"
-}
-
-################################################################################################
-
-
-resource "aws_eip" "app-eip" {
-  instance = aws_instance.app-server.id
-  vpc      = true
-}
-
-resource "aws_eip" "db-eip" {
-  instance = aws_instance.db-server.id
-  vpc      = true
-}
-
-
-#################################################################################################
 
 resource "aws_security_group" "app-server-sg" {
   name        = "app-server-sg"
   description = "App Security Group"
+  vpc_id      = aws_vpc.main.id
+
   ingress {
     from_port   = 22
     to_port     = 22
@@ -202,6 +132,7 @@ resource "aws_security_group" "app-server-sg" {
 resource "aws_security_group" "db-server-sg" {
   name        = "db-server-sg"
   description = "DB Security Group"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     from_port   = 22
@@ -231,3 +162,81 @@ resource "aws_security_group" "db-server-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+
+################################################################################################
+
+resource "aws_instance" "app-server" {
+  ami             = "ami-013f17f36f8b1fefb"
+  instance_type   = "t2.micro"
+  vpc_security_group_ids = ["${aws_security_group.app-server-sg.id}"]
+  key_name        = "terraform_ec2_key"
+
+  subnet_id = aws_subnet.public.id
+
+  user_data = <<-EOF
+          sudo apt update
+          sudo apt install npm -y
+          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+          sudo apt install nodejs -y
+          sudo apt install nginx -y
+          mkdir /home/ubuntu/app
+          cd /home/ubuntu/app
+          git init
+          git clone https://anish-kapuskar:anishk7895@github.com/Spring2021-DevOps/Uber-React.git
+          cd /home/ubuntu/app/Uber-React
+          npm update
+          npm install
+          npm run build
+          sudo cp -a /home/ubuntu/app/Uber-React/build/. /usr/share/nginx/html/
+          sudo systemctl restart nginx
+     EOF
+
+  tags = {
+    Name = "app-server"
+  }
+}
+
+################################################################################################
+
+resource "aws_instance" "db-server" {
+  ami             = "ami-013f17f36f8b1fefb"
+  instance_type   = "t2.micro"
+
+  vpc_security_group_ids = ["${aws_security_group.db-server-sg.id}"]
+  
+  key_name        = "terraform_ec2_key"
+
+  subnet_id = aws_subnet.private.id
+
+  user_data = "${file("install_mongo.sh")}" 
+
+  tags = {
+    Name = "app-server"
+  }
+}
+
+
+################################################################################################
+
+resource "aws_key_pair" "terraform_ec2_key" {
+  key_name   = "terraform_ec2_key"
+  public_key = "${file("../devops-neu-key.pub")}"
+}
+
+################################################################################################
+
+
+resource "aws_eip" "app-eip" {
+  instance = aws_instance.app-server.id
+  vpc      = true
+}
+
+resource "aws_eip" "db-eip" {
+  instance = aws_instance.db-server.id
+  vpc      = true
+}
+
+
+#################################################################################################
+
