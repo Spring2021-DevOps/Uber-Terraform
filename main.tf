@@ -173,24 +173,7 @@ resource "aws_instance" "app-server" {
   key_name        = "terraform_ec2_key"
 
   subnet_id = aws_subnet.public.id
-
-  user_data = <<-EOF
-          sudo apt update
-          sudo apt install npm -y
-          curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-          sudo apt install nodejs -y
-          sudo apt install nginx -y
-          mkdir /home/ubuntu/app
-          cd /home/ubuntu/app
-          git init
-          git clone https://anish-kapuskar:anishk7895@github.com/Spring2021-DevOps/Uber-React.git
-          cd /home/ubuntu/app/Uber-React
-          npm update
-          npm install
-          npm run build
-          sudo cp -a /home/ubuntu/app/Uber-React/build/. /usr/share/nginx/html/
-          sudo systemctl restart nginx
-     EOF
+  user_data = "${data.template_file.webapp.rendered}"
 
   tags = {
     Name = "app-server"
@@ -230,13 +213,32 @@ resource "aws_key_pair" "terraform_ec2_key" {
 resource "aws_eip" "app-eip" {
   instance = aws_instance.app-server.id
   vpc      = true
+  tags = {
+    Name = "webapp IP"
+  }
 }
 
 resource "aws_eip" "db-eip" {
   instance = aws_instance.db-server.id
   vpc      = true
+    tags = {
+    Name = "database IP"
+  }
 }
 
 
 #################################################################################################
+
+data "template_file" "webapp" {
+  template = "${file("./scripts/auto_deploy.tpl")}"
+
+  vars = {
+    git_username = "${var.git_username}"
+    git_password = "${var.git_password}"
+    some_address = "${var.some_address}"
+    db_host = "${aws_eip.db-eip.private_ip}"
+  }
+}
+
+##################################################################################################
 
