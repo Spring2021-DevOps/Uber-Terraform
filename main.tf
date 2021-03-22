@@ -180,6 +180,11 @@ resource "aws_instance" "app-server" {
   }
 }
 
+resource "aws_eip_association" "eip_app_assoc" {
+  instance_id   = aws_instance.app-server.id
+  allocation_id = aws_eip.app-eip.id
+}
+
 ################################################################################################
 
 resource "aws_instance" "db-server" {
@@ -192,13 +197,12 @@ resource "aws_instance" "db-server" {
 
   subnet_id = aws_subnet.private.id
 
-  user_data = "${file("install_mongo.sh")}" 
+  user_data = "${file("./scripts/install_mongo.sh")}" 
 
   tags = {
     Name = "db-server"
   }
 }
-
 
 ################################################################################################
 
@@ -211,7 +215,6 @@ resource "aws_key_pair" "terraform_ec2_key" {
 
 
 resource "aws_eip" "app-eip" {
-  instance = aws_instance.app-server.id
   vpc      = true
   tags = {
     Name = "webapp IP"
@@ -237,6 +240,7 @@ data "template_file" "webapp" {
     git_password = "${var.git_password}"
     some_address = "${var.some_address}"
     db_host = "${aws_eip.db-eip.private_ip}"
+    python_host = "${aws_eip.app-eip.public_ip}"
   }
 }
 

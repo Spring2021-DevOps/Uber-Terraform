@@ -14,6 +14,7 @@ cd /home/ubuntu/app/Uber-React
 sudo npm update
 cd /home/ubuntu/app/Uber-React
 sudo npm install
+echo REACT_APP_PYTHON_HOST = '"${python_host}"' >> /home/ubuntu/app/Uber-React/.env
 cd /home/ubuntu/app/Uber-React
 sudo npm run build
 cd ~
