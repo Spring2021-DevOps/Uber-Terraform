@@ -5,6 +5,8 @@ sudo apt install npm -y
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install nodejs -y
 sudo apt install nginx -y
+sudo cp /usr/share/nginx/html/index.html /usr/share/nginx/html/custom_404.html
+sudo sed -i 's/Welcome to nginx!/UBER APP - 404 Page Not Found!/' /usr/share/nginx/html/custom_404.html
 mkdir /home/ubuntu/app
 echo db_host="${db_host}" >> /home/ubuntu/webapp.properties
 cd /home/ubuntu/app
@@ -30,6 +32,11 @@ server {
   access_log /var/log/nginx/reverse-access.log; 
   error_log /var/log/nginx/reverse-error.log; 
 
+  error_page 404 /custom_404.html;
+  location = /custom_404.html {
+             root /usr/share/nginx/html;
+             internal;
+  }
   location /{
 	try_files \$uri \$uri/ =404;
 	add_header Cache-Control "no-cache"; 
